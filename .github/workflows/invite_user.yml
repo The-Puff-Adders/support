@@ -1,0 +1,34 @@
+name: Invite User to Organization and Close Issue
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  invite_user:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Extract username
+      id: extract_username
+      run: echo "::set-output name=username::${{ github.event.issue.user.login }}"
+
+    - name: Invite user to organization
+      run: |
+        TOKEN="${{ secrets.GITHUB_TOKEN }}"
+        ORG="your-organization-name"
+        USERNAME="${{ steps.extract_username.outputs.username }}"
+
+        # Send invitation to the user
+        curl -X PUT -H "Authorization: token $TOKEN" \
+          -d '' "https://api.github.com/orgs/$ORG/invitations/$USERNAME"
+
+    - name: Close the issue
+      run: |
+        TOKEN="${{ secrets.GITHUB_TOKEN }}"
+        REPO="${{ github.repository }}"
+        ISSUE_NUMBER="${{ github.event.issue.number }}"
+
+        # Close the issue
+        curl -X POST -H "Authorization: token $TOKEN" \
+          -d '{"state": "closed"}' "https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER"
